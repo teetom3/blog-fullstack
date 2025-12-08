@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const register = async (req, res) => {
   try {
@@ -11,7 +12,7 @@ const register = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({email});
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
         .status(400)
@@ -49,12 +50,51 @@ const register = async (req, res) => {
         email: user.email,
       },
     });
-
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
 
-module.exports = { register };
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "il manque votre identifiant ou le mot de passe" });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "l'utilisateur n'existe pas" });
+    }
+    
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "le mot de passe est incorect" });
+    }
+    const token = jwt.sign(
+      {
+        id: user._id,
+      },
+      process.env.JWT_SECRET, 
+      { expiresIn: "30d" }
+    );
+
+    return res.status(201).json({
+        message : "utilisateur connecté",
+        token : token,
+        user : {
+            id : user._id,
+            email : user.email,
+            username : user.username
+        }
+
+    })
+  } catch (error) { console.error('Erreur login:', error);
+    res.status(500).json({ message: "Erreur serveur" });}
+};
+
+module.exports = { register, login };
