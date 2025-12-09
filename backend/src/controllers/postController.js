@@ -32,4 +32,25 @@ return res.status(201).json({message : 'Post crée avec succés',
     
 }
 
-module.exports = {createPost};
+const getAllPost = async (req,res) => {
+
+    try {
+
+
+        const posts = await Post.find().sort({createdAt: -1}).populate('author', 'username email');
+        if(posts.length === 0){
+            return res.status(400).json({message : 'Aucun Posts'})
+        }
+    
+        return res.status(200).json({
+            posts,
+            count : posts.length
+        })
+
+    }catch(error){
+        res.status(500).json({message : 'Impossible de trouvé des articles '})
+    }
+
+}
+
+module.exports = {createPost, getAllPost};
