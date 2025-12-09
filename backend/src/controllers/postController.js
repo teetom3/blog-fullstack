@@ -53,4 +53,20 @@ const getAllPost = async (req,res) => {
 
 }
 
-module.exports = {createPost, getAllPost};
+const getPostById = async (req,res) => {
+    try{
+        const {id} = req.params
+        const post = await Post.findById(id).populate('author', 'username email')
+        if(!post){
+            return res.status(404).json({message : 'Le post n\'existe pas'})
+        }
+        return res.status(200).json({
+            message : 'Article trouvé avec succés',
+            post
+        })
+    }catch(error){
+        return res.status(500).json({message : 'Erreur lors de la recherche du Post'})
+    }
+}
+
+module.exports = {createPost, getAllPost, getPostById};
