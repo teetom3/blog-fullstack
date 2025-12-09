@@ -69,4 +69,54 @@ const getPostById = async (req,res) => {
     }
 }
 
-module.exports = {createPost, getAllPost, getPostById};
+const updatePost = async (req, res) => {
+    try {
+
+        const {id} = req.params;
+        const post = await Post.findById(id).populate('author', 'username email');
+        
+        if (req.user._id.toString() !== post.author._id.toString()){
+            return res.status(403).json({ message:'Non autorisé'})
+        }
+       
+        const {title, content, category, tags} = req.body;
+
+        const updatedPost = await Post.findByIdAndUpdate(id, {
+            title,
+            content,category,tags
+        },{new : true})
+        return res.json({ updatedPost, message : 'Article modifié avec succés'})
+    }catch(error){
+        return res.status(500).json({
+            message : 'Erreur lors de la modification du Post'
+        })
+    }
+}
+
+const deletePost = async(req, res) => {
+
+    try{
+   const {id} = req.params;
+        const post = await Post.findById(id);
+        if (!post) {
+    return res.status(404).json({ 
+        message: 'Article introuvable' 
+    });
+}
+        if (req.user._id.toString() !== post.author._id.toString()){
+            return res.status(403).json({ message:'Non autorisé'})
+        }
+
+        await Post.findByIdAndDelete(id);
+        return res.status(200).json({message : 'article supprimé avec succés'})
+    }catch(error){
+          return res.status(500).json({
+            message : 'Erreur lors de la supression du Post'
+        })
+    }
+     
+
+}
+
+
+module.exports = {createPost, getAllPost, getPostById, updatePost, deletePost};
